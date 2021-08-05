@@ -80,6 +80,8 @@ objects:
           - name: management
             containerPort: 8090
             protocol: TCP
+        imagePullSecrets:
+          - name: ${IMAGE_PULL_SECRET_NAME}
     triggers:
     - type: ConfigChange
 
@@ -166,3 +168,7 @@ parameters:
   description: "Number of asynchronous reporting threads. Experimental feature."
   required: false
   value: "0"
+- description: Private pull secret name
+  displayName: Private pull secret name
+  name: IMAGE_PULL_SECRET_NAME
+  value: "quay.io"
