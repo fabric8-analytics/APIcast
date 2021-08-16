@@ -1,5 +1,7 @@
 apiVersion: v1
 kind: Template
+labels:
+  template: apicast
 metadata:
   name: 3scale-gateway
   annotations:
@@ -11,6 +13,8 @@ objects:
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
+    labels:
+      service: apicast
     name: "${APICAST_NAME}"
   spec:
     replicas: 2
@@ -73,6 +77,14 @@ objects:
               port: management
             initialDelaySeconds: 15
             timeoutSeconds: 1
+          resources:
+            requests:
+              memory: ${{MEMORY_REQUEST}}
+              cpu: ${{CPU_REQUEST}}
+            limits:
+              memory: ${{MEMORY_LIMIT}}
+              cpu: ${CPU_LIMIT}
+
           ports:
           - name: proxy
             containerPort: 8080
@@ -88,6 +100,8 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
+    labels:
+      template: apicast
     name: "${APICAST_NAME}"
   spec:
     ports:
@@ -172,3 +186,23 @@ parameters:
   displayName: Private pull secret name
   name: IMAGE_PULL_SECRET_NAME
   value: "quay.io"
+- description: Request Memory Required by each replica
+  displayName: Request Memory
+  required: true
+  name: MEMORY_REQUEST
+  value: "512Mi"
+- description: Request Number of CPU cores required by each replica
+  displayName: Request CPU cores
+  required: true
+  name: CPU_REQUEST
+  value: "500m"
+- description: Limit Memory Required by each replica
+  displayName: Limit Memory
+  required: true
+  name: MEMORY_LIMIT
+  value: "2Gi"
+- description: Limit Number of CPU cores required by each replica
+  displayName: Limit CPU cores
+  required: true
+  name: CPU_LIMIT
+  value: "1"
