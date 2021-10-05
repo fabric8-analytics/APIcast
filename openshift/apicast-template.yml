@@ -17,7 +17,7 @@ objects:
       service: apicast
     name: "${APICAST_NAME}"
   spec:
-    replicas: 2
+    replicas: 0
     selector:
       deploymentconfig: "${APICAST_NAME}"
     strategy:
