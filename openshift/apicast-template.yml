@@ -212,7 +212,7 @@ parameters:
   displayName: Number of deployment replicas
   required: true
   name: REPLICAS
-  value: "2"
+  value: "1"
 - description: APICAST LOAD SERVICES WHEN NEEDED
   displayName: APICAST LOAD SERVICES WHEN NEEDED
   required: false
