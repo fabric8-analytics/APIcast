@@ -62,6 +62,8 @@ objects:
             value: "${REPORTING_THREADS}"
           - name: APICAST_WORKERS
             value: "${APICAST_WORKERS}"
+          - name: APICAST_LOAD_SERVICES_WHEN_NEEDED
+            value: "${APICAST_LOAD_SERVICES_WHEN_NEEDED}"
           image: "${IMAGE_NAME}"
           imagePullPolicy: Always
           name: "${APICAST_NAME}"
@@ -210,4 +212,9 @@ parameters:
   displayName: Number of deployment replicas
   required: true
   name: REPLICAS
+  value: "1"
+- description: APICAST LOAD SERVICES WHEN NEEDED
+  displayName: APICAST LOAD SERVICES WHEN NEEDED
+  required: false
+  name: APICAST_LOAD_SERVICES_WHEN_NEEDED
   value: "1"
