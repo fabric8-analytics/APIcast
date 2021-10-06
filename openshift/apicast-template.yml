@@ -17,7 +17,7 @@ objects:
       service: apicast
     name: "${APICAST_NAME}"
   spec:
-    replicas: 2
+    replicas: ${{REPLICAS}}
     selector:
       deploymentconfig: "${APICAST_NAME}"
     strategy:
@@ -205,4 +205,9 @@ parameters:
   displayName: Limit CPU cores
   required: true
   name: CPU_LIMIT
+  value: "1"
+- description: Number of deployment replicas
+  displayName: Number of deployment replicas
+  required: true
+  name: REPLICAS
   value: "1"
