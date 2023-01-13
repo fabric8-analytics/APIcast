@@ -58,6 +58,7 @@ function _M.resolve(uri)
     return ip, port
 end
 
+-- #TODO: This local function is no longer called as of PR#1323 and should be removed
 local function resolve(uri)
     local host = uri.host
     local port = uri.port
@@ -70,18 +71,14 @@ local function resolve(uri)
 end
 
 local function absolute_url(uri)
-    local host, port = resolve(uri)
-
+-- target server requires hostname not IP and DNS resolution is left to the proxy itself as specified in the RFC #7231
+-- https://httpwg.org/specs/rfc7231.html#CONNECT
     return format('%s://%s:%s%s',
             uri.scheme,
-            host,
-            port,
+            uri.host,
+            uri.port,
             uri.path or '/'
     )
-end
-
-local function current_path(uri)
-    return format('%s%s%s', uri.path or ngx.var.uri, ngx.var.is_args, ngx.var.query_string or '')
 end
 
 local function forward_https_request(proxy_uri, uri, skip_https_connect)
@@ -92,7 +89,7 @@ local function forward_https_request(proxy_uri, uri, skip_https_connect)
         uri = uri,
         method = ngx.req.get_method(),
         headers = ngx.req.get_headers(0, true),
-        path = current_path(uri),
+        path = format('%s%s%s', ngx.var.uri, ngx.var.is_args, ngx.var.query_string or ''),
 
         -- We cannot use resty.http's .get_client_body_reader().
         -- In POST requests with HTTPS, the result of that call is nil, and it

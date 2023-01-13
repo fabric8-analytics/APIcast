@@ -19,8 +19,6 @@ Log in to your 3scale Admin Portal with the URL provided to you. It will look so
 You will need to create an _Access Token_ that the API gateway will use to download the configuration from your Admin Portal.
 Navigate to the **Personal Settings** (top-right), select the **Tokens** tab and click on **Add Access Token**.
 
-<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-tokens.png" alt="Tokens">
-
 Specify a name for the token, select _Account Management API_ as Scope, select the Permission (_Read Only_ will be enough) and click on **Create Access token**.
 
 When the token is generated, make sure you copy it somewhere, as you won't be able to see it again. Later in this tutorial we refer to this token as *ACCESS_TOKEN*.
@@ -73,7 +71,6 @@ Now, scroll down to the section **Production: Self-managed Gateway** at the bott
 
 For production deployments you can follow the [instructions for OpenShift installation](https://docs.openshift.com/container-platform/3.3/install_config/install/quick_install.html). In order to get started quickly in development environments, there are many ways you can install OpenShift:
 - Using `oc cluster up` command &ndash; https://github.com/openshift/origin/blob/v3.10.0/docs/cluster_up_down.md (used in this tutorial, with detailed instructions for Mac and Windows in addition to Linux which we cover here)
-- All-In-One Virtual Machine using Vagrant &ndash; https://www.openshift.org/vm
 
 In this tutorial the OpenShift cluster will be installed using:
 
@@ -196,16 +193,11 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 1. Open the web console for your OpenShift cluster in your browser: `https://OPENSHIFT-SERVER-IP:8443/console/`
 
- You should see the login screen:
- <img src="https://support.3scale.net/images/screenshots/guides-openshift-login-screen.png" alt="OpenShift Login Screen">
-
  **Warning**: You may receive a warning about an untrusted web-site. This is expected, as we are trying to access to the web console through secure protocol, without having configured a valid certificate. While you should avoid this in production environment, for this test setup you can go ahead and create an exception for this address.
 
 2. Login using your _developer_ credentials created or obtained in the _Setup OpenShift_ section above.
 
  You will see a list of projects, including the _"gateway"_ project you created from the command line above.
-
- <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-project-list-after.png" alt="Openshift Projects" >
 
  If you do not see your gateway project, you probably created it with a different user and need to assign the policy role to to this user.
 
@@ -215,19 +207,13 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
  When the build completes, the UI will refresh and show two instances of APIcast ( _2 pods_ ) that have been started by OpenShift, as defined in the template.
 
- <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-building-threescale-gateway.png" alt="Building the Gateway" >
-
  Each instance of the APIcast Gateway, upon starting, downloads the required configuration from 3scale using the settings you provided on the **Integration** page of your 3scale Admin Portal.
 
  OpenShift will maintain two API Gateway instances and monitor the health of both; any unhealthy API Gateway will automatically be replaced with a new one.
 
 4. In order to allow your API gateways to receive traffic, you'll need to create a route. Start by clicking on **Create Route**.
 
- <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route.png" alt="Create Route" >
-
  Enter the same host you set in 3scale above in the section **Public Base URL** (without the _http://_ and without the port) , e.g. `gateway.openshift.demo`, then click the **Create** button.
-
- <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-route-config.png" alt="Configure Route" >
 
  Create a new route for every 3scale Service you define.
 
@@ -264,8 +250,6 @@ where `ec2-54-321-67-89.compute-1.amazonaws.com` is the Public Domain, and `54.3
 
 Of course, your API configuration is not static. In future you may wish to apply changes to it, for example, choose another authentication method, add new methods and metrics, update the mapping rules, or make any other change on the **Integration** page for your API. In this case you will need to redeploy the APIcast gateway to make the changes effective. In order to do this, go to **Applications > Deployments > threescalegw** and click on **Deploy**.
 
-<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-deploy.png" alt="Deploy OpenShift API Gateway" >
-
 New pods will be created using the updated configuration, and the old ones will be retired. OpenShift supports different deployment strategies, you can learn more about them in the [OpenShift documentation](https://docs.openshift.com/container-platform/3.3/dev_guide/deployments/deployment_strategies.html)
 
 ### Multiple services
@@ -275,8 +259,6 @@ If you have multiple services (APIs) in 3scale, you will need to configure the r
 1. For each API, go to the **Integration** tab, and in _Production_ section enter the _Public Base URL_ and click on **Update Production Configuration** to save the changes. Make sure you use a different _Public Base URL_ for each API, for example, `http://search-api.openshift.demo` for the service called Search API and `http://video-api.openshift.demo` for Video API.
 
 2. In OpenShift create routes for the gateway service ("threescalegw"): `http://search-api.openshift.demo` and `http://video-api.openshift.demo`. From **Applications > Routes** you can create a new route or modify and existing one. Note that you can't change the hostname for already created routes, but you can delete an existing route and add a new one.
-
- <img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-create-more-routes.png" alt="Create routes for multiple services" >
 
 3. You will need to redeploy the gateway to apply the changes you've made in the 3scale admin portal. Go to **Applications > Deployments > threescalegw** and click on **Deploy**.
 
@@ -309,8 +291,6 @@ You can specify the values for the parameters when creating a new application wi
 <pre><code>oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml -p APICAST_LOG_LEVEL=debug</code></pre>
 
 In order to change the parameters for an existing application, you can modify the environment variables values. Go to **Applications > Deployments > threescalegw** and select the _Environment_ tab.
-
-<img src="https://support-preview.3scale.net/images/screenshots/guides-openshift-environment.png" alt="OpenShift environment">
 
 After modifying the values, click on **Save** button at the bottom, and then **Deploy** to apply the changes in the running API Gateway.
 

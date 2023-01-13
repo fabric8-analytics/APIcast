@@ -334,6 +334,7 @@ UwIDAQAB
       end)
 
       local host = 'test_host.com'
+      local version = 'latest'
 
       local proxy_config_response = {
         version = 1,
@@ -345,8 +346,8 @@ UwIDAQAB
         -- The important thing for this test is that it sends the request to
         -- the endpoint that returns services by host
         local endpoint = format(
-            "http://example.com/admin/api/services/proxy/configs/staging.json?%s",
-            encode_args({ host = host })
+            "http://example.com/admin/api/account/proxy_configs/staging.json?%s",
+            encode_args({ host = host, version = version })
         )
 
         test_backend.expect { url = endpoint }.
@@ -549,7 +550,10 @@ UwIDAQAB
       assert.truthy(config)
       assert.equals('string', type(config))
 
-      assert.equals(1, #(cjson.decode(config).services))
+      result_config = cjson.decode(config)
+      assert.equals(1, #result_config.services)
+      assert.equals(1, #result_config.oidc)
+      assert.same('2', result_config.oidc[1].service_id)
     end)
 
     it('returns nil and an error if the config is not a valid', function()
@@ -561,6 +565,63 @@ UwIDAQAB
 
       assert.is_nil(config)
       assert.equals('Expected object key string but found invalid token at character 3', err)
+    end)
+
+    it('returns configuration with oidc config complete', function()
+
+      env.set('THREESCALE_DEPLOYMENT_ENV', 'production')
+      test_backend.expect{ url = 'http://example.com/something/with/path/production.json?host=foobar.example.com' }.
+        respond_with{ status = 200, body = cjson.encode({ proxy_configs = {
+          {
+            proxy_config = {
+              version = 42,
+              environment = 'staging',
+              content = { 
+                id = 2, 
+                backend_version = 1,
+                proxy = { oidc_issuer_endpoint = 'http://user:pass@idp.example.com/auth/realms/foo/' }
+              }
+            }
+          }
+        }})}
+
+      test_backend.expect{ url = "http://idp.example.com/auth/realms/foo/.well-known/openid-configuration" }.
+      respond_with{
+        status = 200,
+        headers = { content_type = 'application/json' },
+        body = [[
+            {
+              "issuer": "https://idp.example.com/auth/realms/foo",
+              "jwks_uri": "https://idp.example.com/auth/realms/foo/jwks",
+              "id_token_signing_alg_values_supported": [ "RS256" ]
+            }
+          ]]
+      }
+
+      test_backend.expect{ url = "https://idp.example.com/auth/realms/foo/jwks" }.
+      respond_with{
+        status = 200,
+        headers = { content_type = 'application/json' },
+        body =  [[
+            { "keys": [{
+                "kid": "3g-I9PWt6NrznPLcbE4zZrakXar27FDKEpqRPlD2i2Y",
+                "kty": "RSA",
+                "n": "iqXwBiZgN2q1dCKU1P_vzyiGacdQhfqgxQST7GFlWU_PUljV9uHrLOadWadpxRAuskNpXWsrKoU_hDxtSpUIRJj6hL5YTlrvv-IbFwPNtD8LnOfKL043_ZdSOe3aT4R4NrBxUomndILUESlhqddylVMCGXQ81OB73muc9ovR68Ajzn8KzpU_qegh8iHwk-SQvJxIIvgNJCJTC6BWnwS9Bw2ns0fQOZZRjWFRVh8BjkVdqa4vCAb6zw8hpR1y9uSNG-fqUAPHy5IYQaD8k8QX0obxJ0fld61fH-Wr3ENpn9YZWYBcKvnwLm2bvxqmNVBzW4rhGEZb9mf-KrSagD5GUw",
+                "e": "AQAB"
+            }] }
+        ]]
+      }
+
+      local config = assert(loader:index('foobar.example.com'))
+
+      assert.truthy(config)
+      assert.equals('string', type(config))
+
+      result_config = cjson.decode(config)
+      assert.equals(1, #result_config.services)
+      assert.equals(1, #result_config.oidc)
+      assert.same('2', result_config.oidc[1].service_id)
+      assert.same('https://idp.example.com/auth/realms/foo', result_config.oidc[1].config.issuer)
     end)
   end)
 end)

@@ -9,7 +9,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: API backend connection uses http proxy
+=== TEST 1: API backend connection uses http proxy 
 --- configuration
 {
   "services": [
@@ -19,7 +19,7 @@ __DATA__
       "backend_authentication_type": "service_token",
       "backend_authentication_value": "token-value",
       "proxy": {
-        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "api_backend": "http://test-upstream.lvh.me:$TEST_NGINX_SERVER_PORT/",
         "proxy_rules": [
           { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
         ],
@@ -46,12 +46,13 @@ __DATA__
     }
   }
 --- upstream
+  server_name test-upstream.lvh.me;
   location / {
     access_by_lua_block {
       local host = ngx.req.get_headers()["Host"]
-      local result = string.match(host, "^test:")
+      local result = string.match(host, "^test%-upstream%.lvh%.me:")
       local assert = require('luassert')
-      assert.equals(result, "test:")
+      assert.equals(result, "test-upstream.lvh.me:")
       ngx.say("yay, api backend")
     }
   }
@@ -73,7 +74,7 @@ using proxy: $TEST_NGINX_HTTP_PROXY
       "backend_authentication_type": "service_token",
       "backend_authentication_value": "token-value",
       "proxy": {
-        "api_backend": "http://test:$TEST_NGINX_SERVER_PORT/",
+        "api_backend": "http://test-upstream.lvh.me:$TEST_NGINX_SERVER_PORT/",
         "proxy_rules": [
           { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
         ],
@@ -100,12 +101,13 @@ using proxy: $TEST_NGINX_HTTP_PROXY
     }
   }
 --- upstream
+  server_name test-upstream.lvh.me;
   location / {
     access_by_lua_block {
       local host = ngx.req.get_headers()["Host"]
-      local result = string.match(host, "^test:")
+      local result = string.match(host, "^test%-upstream%.lvh%.me:")
       local assert = require('luassert')
-      assert.equals(result, "test:")
+      assert.equals(result, "test-upstream.lvh.me:")
       ngx.say("yay, api backend")
     }
   }
@@ -117,8 +119,7 @@ yay, api backend
 --- error_log env
 using proxy: $TEST_NGINX_HTTP_PROXY
 
-
-=== TEST 3: using HTTPS proxy for backend
+=== TEST 3: using HTTPS proxy for backend.
 --- init eval
 $Test::Nginx::Util::PROXY_SSL_PORT = Test::APIcast::get_random_port();
 $Test::Nginx::Util::ENDPOINT_SSL_PORT = Test::APIcast::get_random_port();
@@ -206,8 +207,6 @@ ETag: foobar
 <<EOF
 using proxy: http://127.0.0.1:$Test::Nginx::Util::PROXY_SSL_PORT,
 EOF
-
-
 
 === TEST 4: using HTTPS proxy without api_backend upstream
 --- init eval

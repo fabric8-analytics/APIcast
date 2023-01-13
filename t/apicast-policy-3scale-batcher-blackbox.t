@@ -143,7 +143,7 @@ __DATA__
 content_by_lua_block {
   local function request(path)
     local sock = ngx.socket.tcp()
-    sock:settimeout(2000)
+    sock:settimeout(25000)
 
     local ok, err = sock:connect(ngx.var.server_addr, ngx.var.apicast_port)
     if not ok then

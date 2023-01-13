@@ -1,0 +1,19 @@
+{
+    "ignorePatterns": [
+        {
+            "pattern": "^.*.foo"
+        },
+        {
+            "pattern": "^.*.bar"
+        }
+    ],
+    "replacementPatterns": [
+        {
+            "pattern": "^/",
+            "replacement": "{{BASEURL}}/"
+        }
+    ],
+    "retryOn429": true,
+    "retryCount": 5,
+    "fallbackRetryDelay": "30s"
+}

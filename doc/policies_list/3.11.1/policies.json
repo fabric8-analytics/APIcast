@@ -1,0 +1,2953 @@
+{
+  "policies": {
+    "nginx_filters": [
+      {
+        "name": "Nginx Filter",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Skip nginx filters on certain headers",
+        "version": "builtin",
+        "description": [
+          "Nginx, by default, checks/validates some request headers. This policy allows the user to skips these checks and sends them to the upstream servers. "
+        ],
+        "configuration": {
+          "properties": {
+            "headers": {
+              "items": {
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "Header Name"
+                  },
+                  "append": {
+                    "type": "boolean",
+                    "title": "Append header to upstream"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "name",
+                  "append"
+                ]
+              },
+              "title": "Headers to filter",
+              "type": "array",
+              "minItems": 1
+            }
+          },
+          "type": "object",
+          "required": [
+            "headers"
+          ]
+        }
+      }
+    ],
+    "rate_limit": [
+      {
+        "name": "Edge Limiting",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Adds rate limit.",
+        "version": "builtin",
+        "description": [
+          "This policy adds rate limit."
+        ],
+        "configuration": {
+          "definitions": {
+            "key": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the key, must be unique in the scope"
+                },
+                "name_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'name' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'name' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'name'",
+                  "type": "string"
+                },
+                "scope": {
+                  "oneOf": [
+                    {
+                      "description": "Global scope, affecting to all services",
+                      "enum": [
+                        "global"
+                      ]
+                    },
+                    {
+                      "description": "Service scope, affecting to one service",
+                      "enum": [
+                        "service"
+                      ]
+                    }
+                  ],
+                  "default": "service",
+                  "type": "string",
+                  "description": "Scope of the key"
+                }
+              },
+              "$id": "#/definitions/key",
+              "description": "The key corresponding to the limiter object",
+              "type": "object"
+            },
+            "condition": {
+              "properties": {
+                "operations": {
+                  "items": {
+                    "$ref": "#/definitions/operation"
+                  },
+                  "type": "array",
+                  "minItems": 0
+                },
+                "combine_op": {
+                  "default": "and",
+                  "type": "string",
+                  "enum": [
+                    "and",
+                    "or"
+                  ]
+                }
+              },
+              "$id": "#/definitions/condition",
+              "type": "object",
+              "description": "Condition to be evaluated"
+            },
+            "operation": {
+              "properties": {
+                "left": {
+                  "type": "string"
+                },
+                "left_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'left' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'left' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'left'",
+                  "type": "string"
+                },
+                "right_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'right' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'right' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'right'",
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "description": "Operation to apply. The matches op supports PCRE (Perl compatible regular expressions)",
+                  "enum": [
+                    "==",
+                    "!=",
+                    "matches"
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "left",
+                "op",
+                "right"
+              ]
+            },
+            "error_handling": {
+              "$id": "#/definitions/error_handling",
+              "default": "exit",
+              "oneOf": [
+                {
+                  "description": "Respond with an error",
+                  "enum": [
+                    "exit"
+                  ]
+                },
+                {
+                  "description": "Let the request go through and only output logs",
+                  "enum": [
+                    "log"
+                  ]
+                }
+              ],
+              "type": "string",
+              "description": "How to handle an error"
+            }
+          },
+          "properties": {
+            "connection_limiters": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "$ref": "#/definitions/key"
+                  },
+                  "conn": {
+                    "exclusiveMinimum": 0,
+                    "type": "integer",
+                    "description": "The maximum number of concurrent requests allowed"
+                  },
+                  "condition": {
+                    "$ref": "#/definitions/condition"
+                  },
+                  "burst": {
+                    "description": "The number of excessive concurrent requests (or connections) allowed to be delayed",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "delay": {
+                    "exclusiveMinimum": 0,
+                    "type": "number",
+                    "description": "The default processing latency of a typical connection (or request)"
+                  }
+                }
+              }
+            },
+            "redis_url": {
+              "description": "URL of Redis",
+              "type": "string"
+            },
+            "limits_exceeded_error": {
+              "type": "object",
+              "properties": {
+                "error_handling": {
+                  "$ref": "#/definitions/error_handling"
+                },
+                "status_code": {
+                  "default": 429,
+                  "type": "integer",
+                  "description": "The status code when requests over the limit"
+                }
+              }
+            },
+            "leaky_bucket_limiters": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "$ref": "#/definitions/key"
+                  },
+                  "rate": {
+                    "exclusiveMinimum": 0,
+                    "type": "integer",
+                    "description": "The specified request rate (number per second) threshold"
+                  },
+                  "burst": {
+                    "description": "The number of excessive requests per second allowed to be delayed",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "condition": {
+                    "$ref": "#/definitions/condition"
+                  }
+                }
+              }
+            },
+            "fixed_window_limiters": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "key": {
+                    "$ref": "#/definitions/key"
+                  },
+                  "window": {
+                    "default": 1,
+                    "description": "The time window in seconds before the request count is reset",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "count": {
+                    "exclusiveMinimum": 0,
+                    "type": "integer",
+                    "description": "The specified number of requests threshold"
+                  },
+                  "condition": {
+                    "$ref": "#/definitions/condition"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "key",
+                  "count",
+                  "window"
+                ]
+              }
+            },
+            "configuration_error": {
+              "type": "object",
+              "properties": {
+                "error_handling": {
+                  "$ref": "#/definitions/error_handling"
+                },
+                "status_code": {
+                  "default": 500,
+                  "type": "integer",
+                  "description": "The status code when there is some configuration issue"
+                }
+              }
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "logging": [
+      {
+        "name": "Logging",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Controls logging.",
+        "version": "builtin",
+        "description": [
+          "Controls logging. It allows to enable and disable access logs per ",
+          "service. Also it allows to have a custom access logs format per service"
+        ],
+        "configuration": {
+          "definitions": {
+            "value_type": {
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Evaluate as plain text.",
+                  "enum": [
+                    "plain"
+                  ]
+                },
+                {
+                  "title": "Evaluate as liquid.",
+                  "enum": [
+                    "liquid"
+                  ]
+                }
+              ]
+            }
+          },
+          "properties": {
+            "json_object_config": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "description": "Key for the the json object",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "String to get request information",
+                    "type": "string"
+                  },
+                  "value_type": {
+                    "description": "How to evaluate 'value' field",
+                    "$ref": "#/definitions/value_type"
+                  }
+                }
+              }
+            },
+            "enable_access_logs": {
+              "description": "Whether to enable access logs for the service",
+              "type": "boolean"
+            },
+            "condition": {
+              "type": "object",
+              "properties": {
+                "operations": {
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "match_type": {
+                        "description": "How to evaluate 'match' value",
+                        "$ref": "#/definitions/value_type"
+                      },
+                      "value_type": {
+                        "description": "How to evaluate 'value' field",
+                        "$ref": "#/definitions/value_type"
+                      },
+                      "match": {
+                        "description": "String to get request information to match",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "Value to compare the retrieved match",
+                        "type": "string"
+                      },
+                      "op": {
+                        "type": "string",
+                        "description": "Match operation to compare match field with the provided value",
+                        "enum": [
+                          "==",
+                          "!=",
+                          "matches"
+                        ]
+                      }
+                    },
+                    "type": "object",
+                    "required": [
+                      "op",
+                      "match",
+                      "match_type",
+                      "value",
+                      "value_type"
+                    ]
+                  }
+                },
+                "combine_op": {
+                  "default": "and",
+                  "type": "string",
+                  "enum": [
+                    "and",
+                    "or"
+                  ]
+                }
+              }
+            },
+            "custom_logging": {
+              "title": "Custom logging format",
+              "description": "A string variable that uses liquid templating to render a custom access log entry. All Nginx variables can be used plus per service entries",
+              "type": "string"
+            },
+            "enable_json_logs": {
+              "description": "To enable logs in json format. Custom logging format will be disabled",
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "maintenance_mode": [
+      {
+        "name": "Maintenance Mode",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Rejects incoming requests. Useful for maintenance periods.",
+        "version": "builtin",
+        "description": [
+          "A policy which allows you to reject incoming requests with a specified status code and message. ",
+          "It's useful for maintenance periods or to temporarily block an API. \n",
+          "It allows to select a list of Upstream URLs for which to enable the maintenance mode."
+        ],
+        "configuration": {
+          "definitions": {
+            "operation": {
+              "properties": {
+                "left": {
+                  "type": "string"
+                },
+                "left_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'left' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'left' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'left'",
+                  "type": "string"
+                },
+                "right_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'right' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'right' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'right'",
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "description": "Operation to apply. The matches op supports PCRE (Perl compatible regular expressions)",
+                  "enum": [
+                    "==",
+                    "!=",
+                    "matches"
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "left",
+                "op",
+                "right"
+              ]
+            }
+          },
+          "properties": {
+            "message": {
+              "default": "Service Unavailable - Maintenance",
+              "type": "string",
+              "description": "HTTP response to return"
+            },
+            "condition": {
+              "properties": {
+                "combine_op": {
+                  "default": "and",
+                  "title": "Combine operation",
+                  "type": "string",
+                  "enum": [
+                    "and",
+                    "or"
+                  ]
+                },
+                "operations": {
+                  "items": {
+                    "$ref": "#/definitions/operation"
+                  },
+                  "type": "array",
+                  "minItems": 1
+                }
+              },
+              "title": "Condition",
+              "type": "object",
+              "required": [
+                "combine_op",
+                "operations"
+              ]
+            },
+            "message_content_type": {
+              "default": "text/plain; charset=utf-8",
+              "type": "string",
+              "description": "Content-Type header for the response"
+            },
+            "status": {
+              "default": 503,
+              "type": "integer",
+              "description": "HTTP status code to return"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "upstream_mtls": [
+      {
+        "name": "Upstream Mutual TLS",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Certificates to be used with the upstream API",
+        "version": "builtin",
+        "description": "With this policy a new TLS connection with the upstream API will be used with the certificates set in the config",
+        "configuration": {
+          "title": "Upstream MTLS",
+          "dependencies": {
+            "certificate_key_type": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "certificate_key_type": {
+                      "const": "embedded"
+                    },
+                    "certificate_key": {
+                      "title": "Certificate Key",
+                      "format": "data-url",
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "certificate_key_type": {
+                      "const": "path"
+                    },
+                    "certificate_key": {
+                      "type": "string",
+                      "title": "Certificate Key"
+                    }
+                  }
+                }
+              ]
+            },
+            "certificate_type": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "certificate": {
+                      "title": "Certificate",
+                      "format": "data-url",
+                      "type": "string"
+                    },
+                    "certificate_type": {
+                      "const": "embedded"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "certificate": {
+                      "type": "string",
+                      "title": "Certificate"
+                    },
+                    "certificate_type": {
+                      "const": "path"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "properties": {
+            "certificate_key_type": {
+              "default": "path",
+              "title": "Certificate key type",
+              "type": "string",
+              "enum": [
+                "path",
+                "embedded"
+              ]
+            },
+            "verify": {
+              "type": "boolean",
+              "description": "Verify upstream connection"
+            },
+            "ca_certificates": {
+              "items": {
+                "title": "PEM formatted certificate",
+                "type": "string",
+                "description": "Certificate including the -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----"
+              },
+              "title": "CA certificates",
+              "type": "array"
+            },
+            "certificate_type": {
+              "default": "path",
+              "title": "Certificate type",
+              "type": "string",
+              "enum": [
+                "path",
+                "embedded"
+              ]
+            }
+          },
+          "description": "Built-in Upstream MTLS APIcast policy",
+          "type": "object",
+          "required": [
+            "certificate_type",
+            "certificate_key_type"
+          ]
+        }
+      }
+    ],
+    "rewrite_url_captures": [
+      {
+        "name": "URL Rewriting with Captures",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Captures arguments in a URL and rewrites the URL using them.",
+        "version": "builtin",
+        "description": [
+          "Captures arguments in a URL and rewrites the URL using these arguments. ",
+          "For example, we can specify a matching rule with arguments like ",
+          "'/{orderId}/{accountId}' and a template that specifies how to rewrite ",
+          "the URL using those arguments. Example: ",
+          "'/sales/v2/{orderId}?account={accountId}'; in this case, the request ",
+          "'/123/456' will be transformed into '/sales/v2/123?account=456'"
+        ],
+        "configuration": {
+          "definitions": {
+            "methods": {
+              "items": {
+                "type": "string",
+                "oneOf": [
+                  {
+                    "title": "GET",
+                    "enum": [
+                      "GET"
+                    ]
+                  },
+                  {
+                    "title": "POST",
+                    "enum": [
+                      "POST"
+                    ]
+                  },
+                  {
+                    "title": "PUT",
+                    "enum": [
+                      "PUT"
+                    ]
+                  },
+                  {
+                    "title": "PATCH",
+                    "enum": [
+                      "PATCH"
+                    ]
+                  },
+                  {
+                    "title": "DELETE",
+                    "enum": [
+                      "DELETE"
+                    ]
+                  },
+                  {
+                    "title": "HEAD",
+                    "enum": [
+                      "HEAD"
+                    ]
+                  },
+                  {
+                    "title": "OPTIONS",
+                    "enum": [
+                      "OPTIONS"
+                    ]
+                  }
+                ]
+              },
+              "description": "Array of HTTP methods this rule must be applied to. If left blank it will be applied to all HTTP methods",
+              "type": "array"
+            }
+          },
+          "properties": {
+            "transformations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "match_rule": {
+                    "type": "string",
+                    "description": "Rule to be matched"
+                  },
+                  "methods": {
+                    "$ref": "#/definitions/methods"
+                  },
+                  "template": {
+                    "type": "string",
+                    "description": "Template in which the matched args are replaced"
+                  }
+                }
+              }
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "custom_metrics": [
+      {
+        "name": "Custom Metrics",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Custom metrics on Nginx post actions ",
+        "version": "builtin",
+        "description": [
+          "With this policy, on post_actions the Authrep call will report any new ",
+          "metric if one of the conditions match. The main use case for this is to ",
+          "report any metric based on response headers, status codes, or any other ",
+          "liquid exposed variable."
+        ],
+        "configuration": {
+          "definitions": {
+            "operation": {
+              "properties": {
+                "left": {
+                  "type": "string"
+                },
+                "left_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'left' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'left' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'left'",
+                  "type": "string"
+                },
+                "right_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'right' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'right' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'right'",
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "description": "Operation to apply. The matches op supports PCRE (Perl compatible regular expressions)",
+                  "enum": [
+                    "==",
+                    "!=",
+                    "matches"
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "left",
+                "op",
+                "right"
+              ]
+            },
+            "custom_metrics_rule": {
+              "properties": {
+                "increment": {
+                  "default": "1",
+                  "title": "Increment ",
+                  "type": "string",
+                  "description": "How many hits should be incremented, liquid value "
+                },
+                "metric": {
+                  "default": "",
+                  "title": "Metric to increment ",
+                  "type": "string",
+                  "description": "Metric name to increment in case of condition match (liquid input)"
+                },
+                "condition": {
+                  "properties": {
+                    "combine_op": {
+                      "default": "and",
+                      "title": "Combine operation",
+                      "type": "string",
+                      "enum": [
+                        "and",
+                        "or"
+                      ]
+                    },
+                    "operations": {
+                      "items": {
+                        "$ref": "#/definitions/operation"
+                      },
+                      "type": "array",
+                      "minItems": 1
+                    }
+                  },
+                  "title": "Condition",
+                  "type": "object",
+                  "required": [
+                    "combine_op",
+                    "operations"
+                  ]
+                }
+              },
+              "type": "object",
+              "required": [
+                "metric",
+                "condition",
+                "increment"
+              ]
+            }
+          },
+          "properties": {
+            "rules": {
+              "items": {
+                "$ref": "#/definitions/custom_metrics_rule"
+              },
+              "type": "array",
+              "minItems": 1
+            }
+          }
+        }
+      }
+    ],
+    "cors": [
+      {
+        "name": "CORS Request Handling",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Enables CORS (Cross Origin Resource Sharing) request handling.",
+        "version": "builtin",
+        "description": [
+          "This policy enables Cross Origin Resource Sharing (CORS) request ",
+          "handling. It allows to define CORS headers such as ",
+          "Access-Control-Allow-Headers, Access-Control-Allow-Methods, etc. \n",
+          "When combined with the APIcast policy, the CORS policy should be ",
+          "placed before it in the chain."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "allow_headers": {
+              "items": {
+                "type": "string"
+              },
+              "description": "Allowed headers",
+              "type": "array"
+            },
+            "allow_methods": {
+              "items": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "HEAD",
+                  "POST",
+                  "PUT",
+                  "DELETE",
+                  "PATCH",
+                  "OPTIONS",
+                  "TRACE",
+                  "CONNECT"
+                ]
+              },
+              "description": "Allowed methods",
+              "type": "array"
+            },
+            "allow_origin": {
+              "description": "Origin allowed for CORS requests. The field expects only one origin (e.g. 'https://example.com') or '*'. If left blank, the value of the 'Origin' request header will be used. In order to allow more than one origin it is possible to use a regular expression, if it matches with Origin header value, the value will be set to the Origin Value. In case it does not match, the header will not set at all. Example: '(api|web).test.com' wil match both 'api.test.com' and 'web.test.com'.",
+              "type": "string"
+            },
+            "max_age": {
+              "description": "The ttl of the preflight response (default: 600)",
+              "type": "integer"
+            },
+            "allow_credentials": {
+              "description": "Whether the request can be made using credentials",
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    ],
+    "3scale_batcher": [
+      {
+        "name": "3scale Batcher",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Caches auths from 3scale backend and batches reports.",
+        "version": "builtin",
+        "description": [
+          "This policy caches authorizations from the 3scale backend ",
+          "and reports them in batches. This is more efficient than authorizing ",
+          "and reporting on each request at the expense of losing accuracy in the ",
+          "rate limits."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "batch_report_seconds": {
+              "description": "Duration (in seconds) for batching reports",
+              "type": "integer"
+            },
+            "auths_ttl": {
+              "description": "TTL for cached auths in seconds",
+              "type": "integer"
+            }
+          }
+        }
+      }
+    ],
+    "oauth_mtls": [
+      {
+        "name": "OAuth 2.0 Mutual TLS Client Authentication",
+        "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+        "summary": "Configure OAuth 2.0 Mutual TLS Client Authentication.",
+        "version": "builtin",
+        "description": [
+          "This policy executes OAuth 2.0 Mutual TLS Client Authentication ",
+          "(https://tools.ietf.org/html/rfc8705) for every API call."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "websocket": [
+      {
+        "name": "Websocket",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allows websocket connection pass through.",
+        "version": "builtin",
+        "description": [
+          "A policy which allows Websocket traffic for the service"
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "camel": [
+      {
+        "name": "Camel Service",
+        "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+        "summary": "Adds an Camel proxy to the service.",
+        "version": "builtin",
+        "description": [
+          "With this policy all the traffic for this service will be routed accross ",
+          "the defined proxy"
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "http_proxy": {
+              "description": "Defines a HTTP proxy to be used for connecting to HTTP services. Authentication is not supported",
+              "type": "string"
+            },
+            "all_proxy": {
+              "description": "Defines a HTTP proxy to be used for connecting to services if a protocol-specific proxy is not specified. Authentication is not supported.",
+              "type": "string"
+            },
+            "https_proxy": {
+              "description": "Defines a HTTPS proxy to be used for connecting to HTTPS services. Authentication is not supported",
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "upstream": [
+      {
+        "name": "Upstream",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Allows to modify the upstream URL of the request based on its path.",
+        "version": "builtin",
+        "description": [
+          "This policy allows to modify the upstream URL (scheme, host and port) of the request based on its path. ",
+          "It accepts regular expressions and, when matched against the request path, ",
+          "replaces the upstream URL with a given string. \n",
+          "When combined with the APIcast policy, the upstream policy should be ",
+          "placed before it in the policy chain."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "rules": {
+              "items": {
+                "properties": {
+                  "regex": {
+                    "description": "Regular expression to be matched",
+                    "type": "string"
+                  },
+                  "url": {
+                    "description": "New URL in case of match",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "regex",
+                  "url"
+                ]
+              },
+              "description": "List of rules to be applied",
+              "type": "array"
+            }
+          }
+        }
+      }
+    ],
+    "default_credentials": [
+      {
+        "name": "Anonymous Access",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Provides default credentials for unauthenticated requests.",
+        "version": "builtin",
+        "description": [
+          "This policy allows service exposure without authentication. \n",
+          "It can be useful, for example, for legacy apps that cannot be adapted to ",
+          "send the auth params. \n",
+          "When the credentials are not provided in the request, this policy ",
+          "provides the default ones configured. \n",
+          "You need to configure a user_key; or, the combination of app_id + app_key. \n",
+          "Note: this policy should be placed before the APIcast policy in the chain."
+        ],
+        "configuration": {
+          "dependencies": {
+            "auth_type": {
+              "oneOf": [
+                {
+                  "required": [
+                    "user_key"
+                  ],
+                  "properties": {
+                    "auth_type": {
+                      "enum": [
+                        "user_key"
+                      ]
+                    },
+                    "user_key": {
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "app_id",
+                    "app_key"
+                  ],
+                  "properties": {
+                    "app_key": {
+                      "type": "string"
+                    },
+                    "auth_type": {
+                      "enum": [
+                        "app_id_and_app_key"
+                      ]
+                    },
+                    "app_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "properties": {
+            "auth_type": {
+              "default": "user_key",
+              "type": "string",
+              "enum": [
+                "user_key",
+                "app_id_and_app_key"
+              ]
+            }
+          },
+          "type": "object",
+          "required": [
+            "auth_type"
+          ]
+        }
+      }
+    ],
+    "caching": [
+      {
+        "name": "3scale Auth Caching",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Controls how to cache authorizations returned by the 3scale backend.",
+        "version": "builtin",
+        "description": [
+          "Configures a cache for the authentication calls against the 3scale ",
+          "backend. This policy supports four kinds of caching: \n",
+          " - Strict: it only caches authorized calls. Denied and failed calls ",
+          "invalidate the cache entry.\n",
+          " - Resilient: caches authorized and denied calls. Failed calls do not ",
+          "invalidate the cache. This allows APIcast to authorize and deny calls ",
+          "according to the result of the last request made even when backend is ",
+          "down.\n",
+          "- Allow: caches authorized and denied calls. When backend is ",
+          "unavailable, it will cache an authorization. In practice, this means ",
+          "that when backend is down _any_ request will be authorized unless last ",
+          "call to backend for that request returned 'deny' (status code = 4xx). ",
+          "Make sure to understand the implications of this Caching mode before ",
+          "using it. \n",
+          "- None: disables caching."
+        ],
+        "configuration": {
+          "properties": {
+            "caching_type": {
+              "oneOf": [
+                {
+                  "title": "Strict: cache only authorized calls.",
+                  "enum": [
+                    "strict"
+                  ]
+                },
+                {
+                  "title": "Resilient: authorize according to last request when backend is down.",
+                  "enum": [
+                    "resilient"
+                  ]
+                },
+                {
+                  "title": "Allow: when backend is down, allow everything unless seen before and denied.",
+                  "enum": [
+                    "allow"
+                  ]
+                },
+                {
+                  "title": "None: disable caching.",
+                  "enum": [
+                    "none"
+                  ]
+                }
+              ],
+              "description": "Caching mode",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "required": [
+            "caching_type"
+          ]
+        }
+      }
+    ],
+    "tls_validation": [
+      {
+        "name": "TLS Client Certificate Validation",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Validate certificates provided by the client during TLS handshake (HTTPS).",
+        "version": "builtin",
+        "description": [
+          "Validate client certificates against individual certificates and CA certificates."
+        ],
+        "configuration": {
+          "definitions": {
+            "store": {
+              "items": {
+                "$ref": "#/definitions/certificate"
+              },
+              "$id": "#/definitions/store",
+              "type": "array"
+            },
+            "certificate": {
+              "$id": "#/definitions/certificate",
+              "type": "object",
+              "properties": {
+                "pem_certificate": {
+                  "title": "PEM formatted certificate",
+                  "type": "string",
+                  "description": "Certificate including the -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----"
+                }
+              }
+            }
+          },
+          "properties": {
+            "whitelist": {
+              "title": "Certificate Whitelist",
+              "description": "Individual certificates and CA certificates to be whitelisted.",
+              "$ref": "#/definitions/store"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "3scale_referrer": [
+      {
+        "name": "3scale Referrer",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Sends the 'Referer' to 3scale backend so it can be validated.",
+        "version": "builtin",
+        "description": "Sends the 'Referer' to 3scale backend for validation.",
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "rate_limit_headers": [
+      {
+        "name": "Rate Limits Headers",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Set rate limit headers on response",
+        "version": "builtin",
+        "description": [
+          "This policy implements the `RateLimit Header Fields for HTTP` draft in  ",
+          "responses."
+        ],
+        "configuration": {}
+      }
+    ],
+    "jwt_claim_check": [
+      {
+        "name": "JWT Claim Check",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allow or deny traffic based on a JWT claim",
+        "version": "builtin",
+        "description": [
+          "This Policy allow to block traffic based on a JWT token.",
+          "To verify any JWT claim can be used and can be compared ",
+          "using plain or liquid filters."
+        ],
+        "configuration": {
+          "definitions": {
+            "value_type": {
+              "$id": "#/definitions/value_type",
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Evaluate as plain text.",
+                  "enum": [
+                    "plain"
+                  ]
+                },
+                {
+                  "title": "Evaluate as liquid.",
+                  "enum": [
+                    "liquid"
+                  ]
+                }
+              ]
+            }
+          },
+          "properties": {
+            "rules": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "combine_op": {
+                    "default": "and",
+                    "type": "string",
+                    "enum": [
+                      "and",
+                      "or"
+                    ]
+                  },
+                  "methods": {
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ANY",
+                        "GET",
+                        "HEAD",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS",
+                        "TRACE",
+                        "CONNECT"
+                      ]
+                    },
+                    "default": [
+                      "ANY"
+                    ],
+                    "description": "Allowed methods",
+                    "type": "array"
+                  },
+                  "resource": {
+                    "type": "string",
+                    "description": "Resource controlled by the rule. This is the same format as Mapping Rules. This matches from the beginning of the string and to make an exact match you need to use '$' at the end."
+                  },
+                  "resource_type": {
+                    "description": "How to evaluate 'resource' field",
+                    "$ref": "#/definitions/value_type"
+                  },
+                  "operations": {
+                    "items": {
+                      "properties": {
+                        "jwt_claim": {
+                          "description": "String to get JWT claim",
+                          "type": "string"
+                        },
+                        "jwt_claim_type": {
+                          "description": "How to evaluate 'jwt_claim' value",
+                          "$ref": "#/definitions/value_type"
+                        },
+                        "value_type": {
+                          "description": "How to evaluate 'value' field",
+                          "$ref": "#/definitions/value_type"
+                        },
+                        "value": {
+                          "description": "Value to compare the retrieved JWT claim",
+                          "type": "string"
+                        },
+                        "op": {
+                          "type": "string",
+                          "description": "Match operation to compare JWT claim with the provided value. In case that a not a number is in use in numeric comparison, the value will be transformed to 0.",
+                          "enum": [
+                            "==",
+                            "!=",
+                            "matches"
+                          ]
+                        }
+                      },
+                      "type": "object",
+                      "required": [
+                        "jwt_claim",
+                        "jwt_claim_type",
+                        "op",
+                        "value"
+                      ]
+                    },
+                    "description": "Operations to perform the condition",
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "resource"
+                ]
+              }
+            },
+            "error_message": {
+              "title": "Error message",
+              "description": "Error message to show to user when traffic is blocked",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "upstream_connection": [
+      {
+        "name": "Upstream Connection",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allows to configure several options for the connections to the upstream",
+        "version": "builtin",
+        "description": "Allows to configure several options for the connections to the upstream",
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "read_timeout": {
+              "exclusiveMinimum": 0,
+              "description": "Timeout between two successive read operations (in seconds).",
+              "type": "number"
+            },
+            "connect_timeout": {
+              "description": "Timeout for establishing a connection (in seconds).",
+              "type": "integer"
+            },
+            "send_timeout": {
+              "exclusiveMinimum": 0,
+              "description": "Timeout between two successive write operations (in seconds).",
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "url_rewriting": [
+      {
+        "name": "URL Rewriting",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allows to modify the path of a request.",
+        "version": "builtin",
+        "description": [
+          "This policy allows to modify the path of a request. ",
+          "The operations supported are sub and gsub based on ngx.re.sub and ",
+          "ngx.re.gsub provided by OpenResty. Please check ",
+          "https://github.com/openresty/lua-nginx-module for more details on how ",
+          "to define regular expressions and learn the options supported. \n",
+          "When combined with the APIcast policy, if the URL rewriting policy is ",
+          "placed before it in the chain, the APIcast mapping rules will apply to the ",
+          "modified path. If the URL rewriting policy is placed after APIcast in the ",
+          "chain, then the mapping rules will apply to the original path."
+        ],
+        "configuration": {
+          "definitions": {
+            "methods": {
+              "items": {
+                "type": "string",
+                "oneOf": [
+                  {
+                    "title": "GET",
+                    "enum": [
+                      "GET"
+                    ]
+                  },
+                  {
+                    "title": "POST",
+                    "enum": [
+                      "POST"
+                    ]
+                  },
+                  {
+                    "title": "PUT",
+                    "enum": [
+                      "PUT"
+                    ]
+                  },
+                  {
+                    "title": "PATCH",
+                    "enum": [
+                      "PATCH"
+                    ]
+                  },
+                  {
+                    "title": "DELETE",
+                    "enum": [
+                      "DELETE"
+                    ]
+                  },
+                  {
+                    "title": "HEAD",
+                    "enum": [
+                      "HEAD"
+                    ]
+                  },
+                  {
+                    "title": "OPTIONS",
+                    "enum": [
+                      "OPTIONS"
+                    ]
+                  }
+                ]
+              },
+              "$id": "#/definitions/methods",
+              "description": "Array of HTTP methods this rule must be applied to. If left blank it will be applied to all HTTP methods",
+              "type": "array"
+            }
+          },
+          "properties": {
+            "query_args_commands": {
+              "items": {
+                "properties": {
+                  "methods": {
+                    "description": "Array of HTTP methods this rule must be applied to. If left blank it will be applied to all HTTP methods",
+                    "$ref": "#/definitions/methods"
+                  },
+                  "value_type": {
+                    "default": "plain",
+                    "oneOf": [
+                      {
+                        "title": "Evaluate 'value' as plain text.",
+                        "enum": [
+                          "plain"
+                        ]
+                      },
+                      {
+                        "title": "Evaluate 'value' as liquid.",
+                        "enum": [
+                          "liquid"
+                        ]
+                      }
+                    ],
+                    "description": "How to evaluate 'value'",
+                    "type": "string"
+                  },
+                  "arg": {
+                    "description": "Query argument",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value",
+                    "type": "string"
+                  },
+                  "op": {
+                    "oneOf": [
+                      {
+                        "title": "Add a value to an existing argument",
+                        "enum": [
+                          "add"
+                        ]
+                      },
+                      {
+                        "title": "Create the arg when not set, replace its value when set",
+                        "enum": [
+                          "set"
+                        ]
+                      },
+                      {
+                        "title": "Create the arg when not set, add the value when set",
+                        "enum": [
+                          "push"
+                        ]
+                      },
+                      {
+                        "title": "Delete an arg",
+                        "enum": [
+                          "delete"
+                        ]
+                      }
+                    ],
+                    "description": "Operation to apply to the query argument",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "op",
+                  "arg"
+                ]
+              },
+              "description": "List of commands to apply to the query string args",
+              "type": "array"
+            },
+            "commands": {
+              "items": {
+                "properties": {
+                  "replace": {
+                    "description": "String that will replace what is matched by the regex",
+                    "type": "string"
+                  },
+                  "break": {
+                    "description": "when set to true, if the command rewrote the URL, it will be the last one applied",
+                    "type": "boolean"
+                  },
+                  "methods": {
+                    "$ref": "#/definitions/methods"
+                  },
+                  "op": {
+                    "oneOf": [
+                      {
+                        "title": "Substitute the first match of the regex applied.",
+                        "enum": [
+                          "sub"
+                        ]
+                      },
+                      {
+                        "title": "Substitute all the matches of the regex applied.",
+                        "enum": [
+                          "gsub"
+                        ]
+                      }
+                    ],
+                    "description": "Operation to be applied (sub or gsub)",
+                    "type": "string"
+                  },
+                  "regex": {
+                    "description": "Regular expression to be matched",
+                    "type": "string"
+                  },
+                  "options": {
+                    "description": "Options that define how the regex matching is performed",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "op",
+                  "regex",
+                  "replace"
+                ]
+              },
+              "description": "List of rewriting commands to be applied",
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "liquid_context_debug": [
+      {
+        "name": "Liquid Context Debug",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            },
+            {
+              "name": "upstream",
+              "version": "builtin"
+            },
+            {
+              "name": "routing",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Inspects the available liquid context.",
+        "version": "builtin",
+        "description": [
+          "This is a policy intended only for debugging purposes. This policy ",
+          "returns the context available when evaluating liquid. Any policy can ",
+          "modify the context that is shared between policies and that context is ",
+          "available when evaluating liquid. However, documenting what is available ",
+          "is not possible because policies can add any arbitrary field. Users who ",
+          "want to develop a policy can use this one to know the context available ",
+          "in their configuration. ",
+          "When combined with the APIcast policy or the upstream one, this policy ",
+          "needs to be placed before them in the chain in order to work correctly. ",
+          "Note: This policy only returns duplicated objects once to avoid circular ",
+          "references."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "headers": [
+      {
+        "name": "Header Modification",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allows to include custom headers.",
+        "version": "builtin",
+        "description": [
+          "This policy allows to include custom headers that will be sent to the ",
+          "upstream as well as modify or delete the ones included in the original ",
+          "request. Similarly, this policy also allows to add, modify, and delete ",
+          "the headers included in the response."
+        ],
+        "configuration": {
+          "definitions": {
+            "commands": {
+              "items": {
+                "properties": {
+                  "value_type": {
+                    "default": "plain",
+                    "oneOf": [
+                      {
+                        "title": "Evaluate 'value' as plain text.",
+                        "enum": [
+                          "plain"
+                        ]
+                      },
+                      {
+                        "title": "Evaluate 'value' as liquid.",
+                        "enum": [
+                          "liquid"
+                        ]
+                      }
+                    ],
+                    "description": "How to evaluate 'value'",
+                    "type": "string"
+                  },
+                  "header": {
+                    "description": "Header to be modified",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value that will be added, set or pushed in the header. Not needed when deleting.",
+                    "type": "string"
+                  },
+                  "op": {
+                    "oneOf": [
+                      {
+                        "title": "Add a value to an existing header.",
+                        "enum": [
+                          "add"
+                        ]
+                      },
+                      {
+                        "title": "Create the header when not set, replace its value when set.",
+                        "enum": [
+                          "set"
+                        ]
+                      },
+                      {
+                        "title": "Create the header when not set, add the value when set.",
+                        "enum": [
+                          "push"
+                        ]
+                      },
+                      {
+                        "title": "Delete a header.",
+                        "enum": [
+                          "delete"
+                        ]
+                      }
+                    ],
+                    "description": "Operation to be applied",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "op",
+                  "header"
+                ]
+              },
+              "description": "List of operations to apply to the headers",
+              "type": "array"
+            }
+          },
+          "properties": {
+            "response": {
+              "$ref": "#/definitions/commands"
+            },
+            "request": {
+              "$ref": "#/definitions/commands"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "grpc": [
+      {
+        "name": "HTTP2 Endpoint",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Main functionality to enable HTTP2 endpoint reply.",
+        "version": "builtin",
+        "description": [
+          "To enable full HTTP2 traffic from the user to the final endpoint "
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "on_failed": [
+      {
+        "name": "On fail",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Block request if any policy fails",
+        "version": "builtin",
+        "description": "When a policy fails, this policy allows to set an error message back to the user and stop processing the request to the upstream API.",
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "error_status_code": {
+              "type": "integer",
+              "exclusiveMaximum": 700,
+              "description": "Status code that will send to the user if any policy fails",
+              "minimum": 100
+            }
+          }
+        }
+      }
+    ],
+    "conditional": [
+      {
+        "name": "Conditional Policy [Tech preview]",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Executes a policy chain conditionally.",
+        "version": "builtin",
+        "description": [
+          "Evaluates a condition, and when it's true, it calls its policy chain. ",
+          "This policy cannot be configured from the 3scale Admin Portal."
+        ],
+        "configuration": {
+          "definitions": {
+            "operation": {
+              "properties": {
+                "left": {
+                  "type": "string"
+                },
+                "left_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'left' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'left' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'left'",
+                  "type": "string"
+                },
+                "right_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'right' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'right' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'right'",
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "==",
+                    "!="
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "left",
+                "op",
+                "right"
+              ]
+            },
+            "condition": {
+              "properties": {
+                "operations": {
+                  "items": {
+                    "$ref": "#/definitions/operation"
+                  },
+                  "type": "array",
+                  "minItems": 1
+                },
+                "combine_op": {
+                  "default": "and",
+                  "type": "string",
+                  "enum": [
+                    "and",
+                    "or"
+                  ]
+                }
+              },
+              "$id": "#/definitions/condition",
+              "type": "object",
+              "description": "Condition to be evaluated"
+            }
+          },
+          "properties": {
+            "policy_chain": {
+              "items": {
+                "type": "object"
+              },
+              "description": "The policy chain to execute when the condition is true",
+              "type": "array"
+            },
+            "condition": {
+              "$ref": "#/definitions/condition"
+            }
+          },
+          "type": "object",
+          "required": [
+            "condition"
+          ]
+        }
+      }
+    ],
+    "token_introspection": [
+      {
+        "name": "OAuth 2.0 Token Introspection",
+        "$schema": "http://apicast.io/poolicy-v1/schema#manifest#",
+        "summary": "Configures OAuth 2.0 Token Introspection.",
+        "version": "builtin",
+        "description": [
+          "This policy executes OAuth 2.0 Token Introspection ",
+          "(https://tools.ietf.org/html/rfc7662) for every API call."
+        ],
+        "configuration": {
+          "dependencies": {
+            "auth_type": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "auth_type": {
+                      "describe": "Use the Client credentials and the Token Introspection Endpoint from the OpenID Connect Issuer setting.",
+                      "enum": [
+                        "use_3scale_oidc_issuer_endpoint"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "client_id",
+                    "client_secret",
+                    "introspection_url"
+                  ],
+                  "properties": {
+                    "introspection_url": {
+                      "description": "Introspection Endpoint URL",
+                      "type": "string"
+                    },
+                    "client_id": {
+                      "description": "Client ID for the Token Introspection Endpoint",
+                      "type": "string"
+                    },
+                    "auth_type": {
+                      "describe": "Specify the Token Introspection Endpoint, Client ID, and Client Secret.",
+                      "enum": [
+                        "client_id+client_secret"
+                      ]
+                    },
+                    "client_secret": {
+                      "description": "Client Secret for the Token Introspection Endpoint",
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "properties": {
+            "max_cached_tokens": {
+              "type": "integer",
+              "maximum": 10000,
+              "description": "Max number of tokens to cache",
+              "minimum": 0
+            },
+            "auth_type": {
+              "default": "client_id+client_secret",
+              "type": "string",
+              "enum": [
+                "use_3scale_oidc_issuer_endpoint",
+                "client_id+client_secret"
+              ]
+            },
+            "max_ttl_tokens": {
+              "type": "integer",
+              "maximum": 3600,
+              "description": "Max TTL for cached tokens",
+              "minimum": 1
+            }
+          },
+          "type": "object",
+          "required": [
+            "auth_type"
+          ]
+        }
+      }
+    ],
+    "echo": [
+      {
+        "name": "Echo",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Prints the request back to the client and optionally sets a status code.",
+        "version": "builtin",
+        "description": [
+          "This policy prints the request back to the client and optionally sets ",
+          "a status code."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "exit": {
+              "oneOf": [
+                {
+                  "title": "Interrupt the processing of the request.",
+                  "enum": [
+                    "request"
+                  ]
+                },
+                {
+                  "title": "Skip only the rewrite phase.",
+                  "enum": [
+                    "phase"
+                  ]
+                }
+              ],
+              "description": "Exit mode",
+              "type": "string"
+            },
+            "status": {
+              "description": "HTTP status code to be returned",
+              "type": "integer"
+            }
+          }
+        }
+      }
+    ],
+    "payload_limits": [
+      {
+        "name": "Response/Request content limits",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Limit request or response base on the size of the content",
+        "version": "builtin",
+        "description": [
+          "This policy add limits based on request or response content size."
+        ],
+        "configuration": {
+          "properties": {
+            "response": {
+              "title": "The response limit in bytes",
+              "default": 0,
+              "examples": [
+                0
+              ],
+              "description": "Response limit in bytes, 0 allows all",
+              "type": "integer",
+              "minimum": 0
+            },
+            "request": {
+              "title": "The request limit in bytes",
+              "default": 0,
+              "examples": [
+                0
+              ],
+              "description": "Request limit in bytes, 0 allows all",
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "type": "object",
+          "required": [
+            "request",
+            "response"
+          ]
+        }
+      }
+    ],
+    "keycloak_role_check": [
+      {
+        "name": "RH-SSO/Keycloak Role Check",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Adds role check with Keycloak.",
+        "version": "builtin",
+        "description": [
+          "This policy adds role check with Keycloak.\n",
+          "This policy verifies realm roles and client roles in the access token."
+        ],
+        "configuration": {
+          "definitions": {
+            "value_type": {
+              "$id": "#/definitions/value_type",
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Evaluate 'value' as plain text.",
+                  "enum": [
+                    "plain"
+                  ]
+                },
+                {
+                  "title": "Evaluate 'value' as liquid.",
+                  "enum": [
+                    "liquid"
+                  ]
+                }
+              ]
+            }
+          },
+          "properties": {
+            "scopes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "realm_roles": {
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the role"
+                        },
+                        "name_type": {
+                          "description": "How to evaluate 'name'",
+                          "$ref": "#/definitions/value_type"
+                        }
+                      }
+                    },
+                    "type": "array",
+                    "description": "Realm roles"
+                  },
+                  "client_roles": {
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Name of the role"
+                        },
+                        "client": {
+                          "type": "string",
+                          "description": "Client of the role."
+                        },
+                        "name_type": {
+                          "description": "How to evaluate 'name'",
+                          "$ref": "#/definitions/value_type"
+                        },
+                        "client_type": {
+                          "description": "How to evaluate 'client'",
+                          "$ref": "#/definitions/value_type"
+                        }
+                      }
+                    },
+                    "type": "array",
+                    "description": "Client roles"
+                  },
+                  "methods": {
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ANY",
+                        "GET",
+                        "HEAD",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS",
+                        "TRACE",
+                        "CONNECT"
+                      ]
+                    },
+                    "default": [
+                      "ANY"
+                    ],
+                    "description": "Allowed methods",
+                    "type": "array"
+                  },
+                  "resource_type": {
+                    "description": "How to evaluate 'resource'",
+                    "$ref": "#/definitions/value_type"
+                  },
+                  "resource": {
+                    "type": "string",
+                    "description": "Resource controlled by role. This is the same format as Mapping Rules. This matches from the beginning of the string and to make an exact match you need to use '$' at the end."
+                  }
+                }
+              }
+            },
+            "type": {
+              "default": "whitelist",
+              "description": "Type of the role check",
+              "type": "string",
+              "enum": [
+                "whitelist",
+                "blacklist"
+              ]
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "http_proxy": [
+      {
+        "name": "Proxy Service",
+        "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+        "summary": "Adds an HTTP proxy to the service.",
+        "version": "builtin",
+        "description": [
+          "With this policy all the traffic for this service will be routed accross ",
+          "the defined proxy"
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "http_proxy": {
+              "description": "Defines a HTTP proxy to be used for connecting to HTTP services. Authentication is not supported",
+              "type": "string"
+            },
+            "all_proxy": {
+              "description": "Defines a HTTP proxy to be used for connecting to services if a protocol-specific proxy is not specified. Authentication is not supported.",
+              "type": "string"
+            },
+            "https_proxy": {
+              "description": "Defines a HTTPS proxy to be used for connecting to HTTPS services. Authentication is not supported",
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "ip_check": [
+      {
+        "name": "IP Check",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Accepts or denies a request based on the IP.",
+        "version": "builtin",
+        "description": [
+          "Accepts or denies requests according to a whitelist or a blacklist of ",
+          "IPs. \n",
+          "In the configuration, both single IPs (like 172.18.0.1) and CIDR ",
+          "ranges (like 172.18.0.0/16) can be used."
+        ],
+        "configuration": {
+          "properties": {
+            "error_msg": {
+              "default": "IP address not allowed",
+              "description": "",
+              "type": "string"
+            },
+            "client_ip_sources": {
+              "default": [
+                "last_caller"
+              ],
+              "items": {
+                "type": "string",
+                "anyOf": [
+                  {
+                    "title": "Get the IP from the X-Forwarded-For header (first IP of the list)",
+                    "enum": [
+                      "X-Forwarded-For"
+                    ]
+                  },
+                  {
+                    "title": "Get the IP from the X-Real-IP header",
+                    "enum": [
+                      "X-Real-IP"
+                    ]
+                  },
+                  {
+                    "title": "Get the IP from the proxy_protocol_addr variable",
+                    "enum": [
+                      "proxy_protocol_addr"
+                    ]
+                  },
+                  {
+                    "title": "Use the IP of the last caller",
+                    "enum": [
+                      "last_caller"
+                    ]
+                  }
+                ]
+              },
+              "maxItems": 3,
+              "description": "Specifies how to get the client IP and in which order the options are tried",
+              "type": "array",
+              "minItems": 1
+            },
+            "check_type": {
+              "oneOf": [
+                {
+                  "title": "Block the IPs included in the list",
+                  "enum": [
+                    "blacklist"
+                  ]
+                },
+                {
+                  "title": "Allow only the IPs included in the list",
+                  "enum": [
+                    "whitelist"
+                  ]
+                }
+              ],
+              "description": "The type of check to apply",
+              "type": "string"
+            },
+            "ips": {
+              "items": {
+                "type": "string"
+              },
+              "description": "List of IPs",
+              "type": "array"
+            }
+          },
+          "type": "object",
+          "required": [
+            "ips",
+            "check_type"
+          ]
+        }
+      }
+    ],
+    "soap": [
+      {
+        "name": "SOAP",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Adds support for a small subset of SOAP.",
+        "version": "builtin",
+        "description": [
+          "This policy adds support for a very small subset of SOAP. \n",
+          "It expects a SOAP action URI in the SOAPAction header or the Content-Type ",
+          "header. The SOAPAction header is used in v1.1 of the SOAP standard: ",
+          "https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383528 , whereas ",
+          "the Content-Type header is used in v1.2 of the SOAP standard: ",
+          "https://www.w3.org/TR/soap12-part2/#ActionFeature \n",
+          "The SOAPAction URI is matched against the mapping rules defined in the ",
+          "policy and calculates a usage based on that so it can be authorized and ",
+          "reported against 3scale's backend."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "mapping_rules": {
+              "items": {
+                "properties": {
+                  "pattern": {
+                    "description": "Pattern to match against the request.",
+                    "type": "string"
+                  },
+                  "delta": {
+                    "description": "Value.",
+                    "type": "integer"
+                  },
+                  "metric_system_name": {
+                    "description": "Metric.",
+                    "type": "string"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "pattern",
+                  "metric_system_name",
+                  "delta"
+                ]
+              },
+              "description": "Mapping rules.",
+              "type": "array"
+            }
+          }
+        }
+      }
+    ],
+    "routing": [
+      {
+        "name": "Routing",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "order": {
+          "before": [
+            {
+              "name": "apicast",
+              "version": "builtin"
+            }
+          ]
+        },
+        "summary": "Allows to modify the upstream URL of the request.",
+        "version": "builtin",
+        "description": [
+          "This policy allows to modify the upstream URL (scheme, host and port) of ",
+          "the request based on its path, its query arguments, a header, or a JWT ",
+          "claim. \n",
+          "When combined with the APIcast policy, the routing policy should be ",
+          "placed before it in the policy chain."
+        ],
+        "configuration": {
+          "definitions": {
+            "operation": {
+              "properties": {
+                "value_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'value' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'value' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'type'",
+                  "type": "string"
+                },
+                "match": {
+                  "type": "string",
+                  "enum": [
+                    "path",
+                    "header",
+                    "query_arg",
+                    "jwt_claim",
+                    "liquid"
+                  ]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "enum": [
+                    "==",
+                    "!=",
+                    "matches"
+                  ]
+                }
+              },
+              "dependencies": {
+                "match": {
+                  "oneOf": [
+                    {
+                      "required": [
+                        "header_name"
+                      ],
+                      "properties": {
+                        "header_name": {
+                          "type": "string"
+                        },
+                        "match": {
+                          "enum": [
+                            "header"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "query_arg_name"
+                      ],
+                      "properties": {
+                        "query_arg_name": {
+                          "type": "string"
+                        },
+                        "match": {
+                          "enum": [
+                            "query_arg"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "jwt_claim_name"
+                      ],
+                      "properties": {
+                        "jwt_claim_name": {
+                          "type": "string"
+                        },
+                        "match": {
+                          "enum": [
+                            "jwt_claim"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "liquid_value"
+                      ],
+                      "properties": {
+                        "liquid_value": {
+                          "type": "string"
+                        },
+                        "match": {
+                          "enum": [
+                            "liquid"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "properties": {
+                        "match": {
+                          "enum": [
+                            "path"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "match",
+                "op",
+                "value"
+              ]
+            }
+          },
+          "properties": {
+            "rules": {
+              "items": {
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "host_header": {
+                    "description": "Host for the Host header. When not specified, defaults to the host of the URL.",
+                    "type": "string"
+                  },
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "operations": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/operation"
+                        }
+                      },
+                      "combine_op": {
+                        "default": "and",
+                        "type": "string",
+                        "description": "With 'and', the condition will be true only when all the operations evaluate to true. With 'or', the condition will be true when at least one operation evaluates to true.",
+                        "enum": [
+                          "and",
+                          "or"
+                        ]
+                      }
+                    }
+                  },
+                  "owner_id": {
+                    "type": "integer",
+                    "description": "Value to only increment hits on the mapping rules owner by the same id. "
+                  },
+                  "replace_path": {
+                    "type": "string",
+                    "description": "Liquid filter to modify the request path to the matched Upstream URL. When no specified, keep the original path"
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "url"
+                ]
+              },
+              "description": "List of rules to be applied",
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "content_caching": [
+      {
+        "name": "Content caching",
+        "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+        "summary": "Option to enable content caching on responses.",
+        "version": "builtin",
+        "description": [
+          "With this policy a new way to enable caching in APICast is enabled based on any Liquid filter operation"
+        ],
+        "configuration": {
+          "definitions": {
+            "operation": {
+              "properties": {
+                "left": {
+                  "type": "string"
+                },
+                "left_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'left' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'left' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'left'",
+                  "type": "string"
+                },
+                "right_type": {
+                  "oneOf": [
+                    {
+                      "title": "Evaluate 'right' as plain text.",
+                      "enum": [
+                        "plain"
+                      ]
+                    },
+                    {
+                      "title": "Evaluate 'right' as liquid.",
+                      "enum": [
+                        "liquid"
+                      ]
+                    }
+                  ],
+                  "default": "plain",
+                  "description": "How to evaluate 'right'",
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "op": {
+                  "type": "string",
+                  "description": "Operation to apply. The matches op supports PCRE (Perl compatible regular expressions)",
+                  "enum": [
+                    "==",
+                    "!=",
+                    "matches"
+                  ]
+                }
+              },
+              "$id": "#/definitions/operation",
+              "type": "object",
+              "required": [
+                "left",
+                "op",
+                "right"
+              ]
+            },
+            "rule": {
+              "title": "Rule",
+              "properties": {
+                "header": {
+                  "default": "X-Cache-Status",
+                  "title": "Header name ",
+                  "type": "string",
+                  "description": "Header name to return with the cache status (HIT, MISS,EXPIRED)"
+                },
+                "cache": {
+                  "title": "Enable cache if match",
+                  "type": "boolean",
+                  "default": false
+                },
+                "condition": {
+                  "properties": {
+                    "combine_op": {
+                      "default": "and",
+                      "title": "Combine operation",
+                      "type": "string",
+                      "enum": [
+                        "and",
+                        "or"
+                      ]
+                    },
+                    "operations": {
+                      "items": {
+                        "$ref": "#/definitions/operation"
+                      },
+                      "type": "array",
+                      "minItems": 1
+                    }
+                  },
+                  "title": "Condition",
+                  "type": "object",
+                  "required": [
+                    "combine_op",
+                    "operations"
+                  ]
+                }
+              },
+              "$id": "#/definitions/rule",
+              "type": "object",
+              "required": [
+                "cache"
+              ]
+            }
+          },
+          "properties": {
+            "rules": {
+              "title": "Rules",
+              "items": {
+                "$ref": "#/definitions/rule"
+              },
+              "description": "Rules to enable/disable caching",
+              "type": "array",
+              "minItems": 1
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "statuscode_overwrite": [
+      {
+        "name": "HTTP Status Code Overwrite",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Modify the HTTP status code returned by the upstream",
+        "version": "builtin",
+        "description": [
+          "Configures a 1-1 mapping for upstream's http codes."
+        ],
+        "configuration": {
+          "definitions": {
+            "codes": {
+              "items": {
+                "properties": {
+                  "apicast": {
+                    "title": "Return HTTP code",
+                    "maximum": 600,
+                    "description": "HTTP code to return",
+                    "type": "integer",
+                    "minimum": 100
+                  },
+                  "upstream": {
+                    "title": "Upstream",
+                    "maximum": 600,
+                    "description": "Upstream HTTP code to replace",
+                    "type": "integer",
+                    "minimum": 100
+                  }
+                },
+                "type": "object",
+                "required": [
+                  "upstream",
+                  "apicast"
+                ]
+              },
+              "description": "List of codes to overwrite",
+              "type": "array"
+            }
+          },
+          "properties": {
+            "http_statuses": {
+              "$ref": "#/definitions/codes",
+              "title": "HTTP status codes map"
+            }
+          },
+          "type": "object"
+        }
+      }
+    ],
+    "tls": [
+      {
+        "name": "TLS Termination",
+        "$schema": "http://apicast.io/policy-v1/schema#manifest#",
+        "summary": "Configure TLS termination certificates",
+        "version": "builtin",
+        "description": [
+          "Configure APIcast to serve TLS certificates for HTTPS connections."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "certificates": {
+              "items": {
+                "type": "object",
+                "anyOf": [
+                  {
+                    "properties": {
+                      "certificate_path": {
+                        "type": "string",
+                        "title": "Path to the certificate"
+                      },
+                      "certificate_key_path": {
+                        "type": "string",
+                        "title": "Path to the certificate private key"
+                      }
+                    },
+                    "title": "Certificate from local filesystem",
+                    "required": [
+                      "certificate_path",
+                      "certificate_key_path"
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "certificate_key": {
+                        "description": "Private key including the -----BEGIN * PRIVATE KEY----- and -----END * PRIVATE KEY -----",
+                        "title": "PEM formatted certificate private key",
+                        "type": "string",
+                        "format": "data-url"
+                      },
+                      "certificate": {
+                        "description": "Certificate including the -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----",
+                        "title": "PEM formatted certificate",
+                        "type": "string",
+                        "format": "data-url"
+                      }
+                    },
+                    "title": "Embedded certificate",
+                    "required": [
+                      "certificate",
+                      "certificate_key"
+                    ]
+                  }
+                ]
+              },
+              "title": "TLS certificates",
+              "description": "The first valid certificate is going to be served to the client.",
+              "type": "array"
+            }
+          }
+        }
+      }
+    ],
+    "retry": [
+      {
+        "name": "Retry",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Allows to retry requests to the upstream",
+        "version": "builtin",
+        "description": "Allows to retry requests to the upstream",
+        "configuration": {
+          "type": "object",
+          "properties": {
+            "retries": {
+              "type": "integer",
+              "maximum": 10,
+              "description": "Number of retries",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    ],
+    "apicast": [
+      {
+        "name": "3scale APIcast",
+        "$schema": "http://apicast.io/policy-v1.1/schema#manifest#",
+        "summary": "Main functionality of APIcast to work with the 3scale API manager.",
+        "version": "builtin",
+        "description": [
+          "Main functionality of APIcast to work with the 3scale API ",
+          "manager. This includes matching of mapping rules, authorization, ",
+          "reporting, etc."
+        ],
+        "configuration": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ]
+  }
+}

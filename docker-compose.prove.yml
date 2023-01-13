@@ -1,0 +1,13 @@
+version: '2.1'
+services:
+  prove:
+    image: ${IMAGE_NAME:-apicast-test}
+    environment:
+      HOME: /opt/app-root/src/
+      TEST_NGINX_BINARY: openresty
+      TEST_NGINX_REDIS_HOST: redis
+    command: "sh -ec '$$TEST_NGINX_BINARY -V; cd ; make dependencies; make prove; exit $$?'"
+    depends_on:
+      - redis
+  redis:
+    image: redis

@@ -176,3 +176,16 @@ Key concepts of the docker command:
   - Current Lua file must be shared to the container `-v $(pwd):/config`
   - `APICAST_ENVIRONMENT` variable must be set to the lua file that is
     stored on `/config` directory.
+
+
+## Liquid variables
+
+- req.headers(metatable): list of request headers
+- resp.headers(metatable): list of response headers.
+- usage(string): value of the metrics used (Usually called usage)
+- service(metatable): service information, all the values defined in
+  configuration/service.lua
+- original_request(metatable): initial request that arrived on the platform.
+- jwt(metatable): Json Web token details.
+- credentials(metatable): credentials information for the request
+- Any other Nginx variable defined in each Nginx Module, like this: http://nginx.org/en/docs/http/ngx_http_upstream_module.html#variables

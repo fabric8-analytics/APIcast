@@ -1,4 +1,0 @@
-.s2i/bin
-conf/ca-bundle.crt
-lua_modules
-.cache

@@ -1,17 +1,11 @@
+---
 version: '2.2'
 services:
   development:
-    image: ${IMAGE:-quay.io/3scale/s2i-openresty-centos7:master}
+    image: ${IMAGE:-quay.io/3scale/apicast-ci:openresty-1.19.3}
     depends_on:
       - redis
-    working_dir: /home/centos/
-    volumes:
-      - .docker/lua_modules:/home/centos/lua_modules
-      - .docker/local:/home/centos/local
-      - .docker/vendor/cache:/home/centos/vendor/cache
-      # no need to access those from docker
-      - /home/centos/.docker
-      - /home/centos/.git
+    working_dir: /opt/app-root/src/
     command: cat
     tty: true
     init: true
@@ -19,10 +13,10 @@ services:
       EDITOR: vi
       TEST_NGINX_REDIS_HOST: redis
       TEST_NGINX_BINARY: openresty
-      PROJECT_PATH: /home/centos
-      TEST_NGINX_APICAST_PATH: /home/centos/gateway
+      PROJECT_PATH: /opt/app-root/src
+      TEST_NGINX_APICAST_PATH: /opt/app-root/src/gateway
       ROVER: /usr/local/openresty/luajit/bin/rover
-      HOME: /home/centos/
+      HOME: /opt/app-root/src/
       # https://github.com/jenkinsci/docker/issues/519#issuecomment-313052325
       GIT_COMMITTER_NAME: ${GIT_COMMITTER_NAME:-${USER}}
       GIT_COMMITTER_EMAIL: ${GIT_COMMITTER_EMAIL:-""}

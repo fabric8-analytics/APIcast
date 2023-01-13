@@ -4,7 +4,6 @@ services:
     privileged: true
     pid: "host"
     volumes:
-      - .:/home/centos/
-      - .docker/cpanm:/home/centos/.cpanm
+      - .:/opt/app-root/src/
       - /sys/kernel/debug:/sys/kernel/debug
       - /lib/modules:/lib/module

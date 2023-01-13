@@ -43,19 +43,6 @@ services:
       APICAST_CONFIGURATION_LOADER: test
     dns_search:
       - example.com
-  prove:
-    image: ${IMAGE_NAME:-apicast-test}
-    user: root
-    environment:
-      TEST_NGINX_BINARY: openresty
-      TEST_NGINX_REDIS_HOST: redis
-    command: "sh -ec '$$TEST_NGINX_BINARY -V; cd ; /usr/libexec/s2i/entrypoint make prove; exit $$?'"
-    dns_search:
-      - example.com
-    depends_on:
-      - redis
-    volumes_from:
-    - container:${COMPOSE_PROJECT_NAME:-apicast_build_0}-source
   redis:
     image: redis
   keycloak:

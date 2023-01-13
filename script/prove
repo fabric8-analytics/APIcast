@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -euo pipefail
 
 coverage='luacov.stats.*.out'
@@ -15,10 +15,11 @@ if [ -n "${JUNIT_OUTPUT_FILE:-}" ]; then
   mkdir -p "$(dirname "$JUNIT_OUTPUT_FILE")"
 fi
 
-success=0
-PROVE_RESULT=$(prove "$@" 2>&1 | tee /dev/tty) || success=$?
+TMPFILE=$(mktemp) || exit 1
+prove "$@" 2>&1 | tee $TMPFILE
+# No need to capture exit code. set -e option instructs bash to immediately exit if any command has a non-zero exit status
 if [ -n "${CI:-}" ]; then
-    echo "${PROVE_RESULT}" | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
+    cat "${TMPFILE}" | awk '/found ONLY/ { print "FAIL: because found ONLY in test"; print; exit 1 }; { print }'
     status="$?"
     if [ $status -gt 0 ]; then
       echo "Failure. Exit code: ${status}"
@@ -26,9 +27,4 @@ if [ -n "${CI:-}" ]; then
     fi
 fi
 
-if [ $success -eq 0 ]; then
-  echo "Success"
-else
-  echo "Failure. Exit code: ${success}"
-  exit $success
-fi
+echo "Success"

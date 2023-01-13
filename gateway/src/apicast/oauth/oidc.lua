@@ -103,9 +103,9 @@ local function timestamp_to_seconds_from_now(expiry, clock)
   return ttl
 end
 
-local function find_public_key(jwt, keys)
+local function find_jwk(jwt, keys)
   local jwk = keys and keys[jwt.header.kid]
-  if jwk then return jwk.pem end
+  if jwk then return jwk end
 end
 
 -- Parses the token - in this case we assume it's a JWT token
@@ -182,8 +182,15 @@ function _M:verify(jwt, cache_key)
     return false, '[jwt] invalid alg'
   end
 
-  -- TODO: this should be able to use DER format instead of PEM
-  local pubkey = find_public_key(jwt, self.keys)
+  -- Find jwk with matching kid for current JWT in request
+  local jwk_obj = find_jwk(jwt, self.keys)
+
+  local pubkey = jwk_obj.pem
+  -- Check the jwk for the alg field and if not present skip the validation as it is 
+  -- OPTIONAL according to https://www.rfc-editor.org/rfc/rfc7517#section-4.4
+  if jwk_obj.alg and jwk_obj.alg ~= jwt.header.alg then
+    return false, '[jwt] alg mismatch'
+  end
 
   jwt = JWT:verify_jwt_obj(pubkey, jwt, self.jwt_claims)
 

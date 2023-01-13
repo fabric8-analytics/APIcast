@@ -135,10 +135,10 @@ describe('Rate limit policy', function()
           connection_limiters = {
             { key = { name = 'test1', scope = 'global' }, conn = 20, burst = 10, delay = 0.5 }
           },
-          redis_url = 'redis://invalidhost:'..redis_port..'/1'
+          redis_url = 'redis://invalidhost.domain:'..redis_port..'/1'
         })
 
-        assert.returns_error('failed to connect to redis on invalidhost:6379: invalidhost could not be resolved (3: Host not found)', rate_limit_policy:access(context))
+        assert.returns_error('failed to connect to redis on invalidhost.domain:6379: invalidhost.domain could not be resolved (3: Host not found)', rate_limit_policy:access(context))
 
         assert.spy(ngx.exit).was_called_with(500)
       end)

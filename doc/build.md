@@ -20,20 +20,23 @@ Lua Dependencies are defined in [`apicast-VERSION.rockspec`](https://github.com/
 
 ## Components
 
-APIcast is using [source-to-image](https://github.com/openshift/source-to-image) to build the final Docker image.
-You'll need to have source-to-image installed and available on your system.
+APIcast is using [docker](https://www.docker.com/) to build the APIcast runtime image.
+You must have docker installed and available on your system.
 
-The builder image used is [s2i-openresty](https://github.com/3scale/s2i-openresty).
+The development image used is based on [UBI](https://developers.redhat.com/products/rhel/ubi).
 It builds on heavy OpenShift base images.
-In the future, we would like to utilize s2i extended build and use a very minimal runtime image.
+In future releases, we will leverage multistage docker files and use a minimal runtime image.
 
 ## Build process
 
-The build is defined in `Makefile`. The [`make build`](https://github.com/3scale/apicast/blob/bc8631fcf91fcab25cae84152e16536ce01d22be/Makefile#L31-L32) is meant for development and uses s2i incremental build.
-The [`make release`](https://github.com/3scale/apicast/blob/bc8631fcf91fcab25cae84152e16536ce01d22be/Makefile#L34-L35) is for the release build. 
+**runtime image**
 
-Both use the [s2i-openresty](https://github.com/3scale/s2i-openresty) builder image pushed to [`quay.io/3scale/s2i-openresty-centos`](https://quay.io/repository/3scale/s2i-openresty-centos7?tag=latest).
+The runtime image build is defined in the `Makefile`. The `make runtime-image` is for the upstream release build.
+
+**development image**
+
+The development image build is defined in the `Makefile`. The `make dev-build` is meant for development.
 
 ## Release
 
-`master` branch is automatically built and pushed on every successful build [by Travis](https://github.com/3scale/apicast/blob/bc8631fcf91fcab25cae84152e16536ce01d22be/.travis.yml#L51-L56) to [`quay.io/3scale/apicast:master`](https://quay.io/repository/3scale/apicast?tab=tags&tag=master).
+The `master` branch is automatically built and pushed on every successful build by CircleCI to [`quay.io/3scale/apicast:master`](https://quay.io/repository/3scale/apicast?tab=tags&tag=master).

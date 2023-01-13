@@ -20,6 +20,7 @@
       "headers": {
         "type": "array",
         "title": "Headers to filter",
+        "minItems": 1,
         "items": {
           "type": "object",
           "properties": {
@@ -29,7 +30,8 @@
             },
             "append": {
               "type": "boolean",
-              "title": "Append header to upstream"
+              "title": "Append header to upstream",
+              "default": false
             }
           },
           "required": [

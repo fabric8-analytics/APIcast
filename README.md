@@ -54,7 +54,6 @@ oc create secret generic apicast-configuration-url-secret \
 oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/apicast-template.yml
 ```
 
-
 ## Features
 
 - Performance: it is fast because it's built on top of [NGINX](https://www.nginx.com/) and uses [LuaJIT](https://luajit.org/).
@@ -66,7 +65,6 @@ oc new-app -f https://raw.githubusercontent.com/3scale/apicast/master/openshift/
 - [OpenTracing](https://opentracing.io/) integration with [Jaeger](https://www.jaegertracing.io/).
 - Can be deployed in [Openshift](https://www.openshift.com/).
 - Integrates with IDPs like [Keycloak](https://www.keycloak.org) to provide authentication based on [OIDC](https://openid.net/connect/).
-
 
 ## Development
 
@@ -85,12 +83,12 @@ To install the dependencies inside the container run:
 make dependencies
 ```
 
-To run the unit tests inside the container:
+To run the [unit tests](/doc/unittests.md) inside the container:
 ```shell
 make busted
 ```
 
-To run the integration tests inside the container:
+To run the [integration tests](/doc/integration-tests.md) inside the container:
 ```shell
 make prove
 ```
@@ -105,6 +103,8 @@ APIcast uses:
 - [OpenResty](http://openresty.org/en/): a platform that includes NGINX, LuaJIT and Lua modules.
 - [busted](https://github.com/Olivine-Labs/busted): for the unit tests.
 - [Test::Nginx](http://search.cpan.org/~agent/Test-Nginx/lib/Test/Nginx/Socket.pm): for the integration tests.
+
+More info can be found in the [development](/doc/development.md) specific doc.
 
 ## Documentation
 

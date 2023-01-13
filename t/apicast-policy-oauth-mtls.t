@@ -35,7 +35,7 @@ __DATA__
     {
       "issuer": "https://example.com/auth/realms/apicast",
       "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
-      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----", "alg": "RS256" } }
     }
   ],
   "services": [
@@ -70,7 +70,7 @@ proxy_ssl_trusted_certificate $TEST_NGINX_SERVER_ROOT/html/ca.crt;
 proxy_ssl_certificate $TEST_NGINX_SERVER_ROOT/html/client.crt;
 proxy_ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/client.key;
 proxy_pass https://$server_addr:$apicast_port/t;
-proxy_set_header Host localhost;
+proxy_set_header Host test;
 proxy_set_header Authorization "Bearer eyJraWQiOiJzb21la2lkIiwiYWxnIjoiUlMyNTYifQ.eyJleHAiOjE5MjY4NzMwNTQsInN1YiI6InNvbWVvbmUiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGlyZWN0b3IiXX0sImZvbyI6IjEiLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tL2F1dGgvcmVhbG1zL2FwaWNhc3QiLCJhdWQiOiJhdWRpZW5jZSIsImNuZiI6eyJ4NXQjUzI1NiI6Ilk0X0xWbGtwRTZxa3NjUGJ0b0ttM2lpS0JnZndiT2ZiZEtCRWRuWjZaUFkifX0.Iin-tr6EVhEXjbj9R6xZSToBxZZBDXhl6i9ROw6SJQE6RWJeLt6mKK4jdTMVdxoZfm1J_NqayGJh3N99kHdIbA";
 log_by_lua_block { collectgarbage() }
 --- response_body
@@ -105,7 +105,7 @@ yay, api backend
     {
       "issuer": "https://example.com/auth/realms/apicast",
       "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
-      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----", "alg": "RS256" } }
     }
   ],
   "services": [
@@ -140,7 +140,7 @@ proxy_ssl_trusted_certificate $TEST_NGINX_SERVER_ROOT/html/ca.crt;
 proxy_ssl_certificate $TEST_NGINX_SERVER_ROOT/html/client.crt;
 proxy_ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/client.key;
 proxy_pass https://$server_addr:$apicast_port/t;
-proxy_set_header Host localhost;
+proxy_set_header Host test;
 proxy_set_header Authorization "Bearer eyJraWQiOiJzb21la2lkIiwiYWxnIjoiUlMyNTYifQ.eyJleHAiOjE5MjQxMjQ1ODIsInN1YiI6InNvbWVvbmUiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGlyZWN0b3IiXX0sImZvbyI6IjEiLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tL2F1dGgvcmVhbG1zL2FwaWNhc3QiLCJhdWQiOiJhdWRpZW5jZSIsImNuZiI6eyJ4NXQjUzI1NiI6ImludmFsaWQifX0.h9Lay5rff08ipXd2juLS_A0fpJKn6UPD1AIxBCibdTi1wyhF5fCLmxzfwozgtqVTlcOGTu9ZtVfp88tRZ2mE-A";
 log_by_lua_block { collectgarbage() }
 --- response_body chomp
@@ -175,7 +175,7 @@ log_by_lua_block { collectgarbage() }
     {
       "issuer": "https://example.com/auth/realms/apicast",
       "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
-      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----", "alg": "RS256" } }
     }
   ],
   "services": [
@@ -208,7 +208,7 @@ log_by_lua_block { collectgarbage() }
 proxy_ssl_verify on;
 proxy_ssl_trusted_certificate $TEST_NGINX_SERVER_ROOT/html/ca.crt;
 proxy_pass https://$server_addr:$apicast_port/t;
-proxy_set_header Host localhost;
+proxy_set_header Host test;
 proxy_set_header Authorization "Bearer eyJraWQiOiJzb21la2lkIiwiYWxnIjoiUlMyNTYifQ.eyJleHAiOjE5MjY4NzMwNTQsInN1YiI6InNvbWVvbmUiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGlyZWN0b3IiXX0sImZvbyI6IjEiLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tL2F1dGgvcmVhbG1zL2FwaWNhc3QiLCJhdWQiOiJhdWRpZW5jZSIsImNuZiI6eyJ4NXQjUzI1NiI6Ilk0X0xWbGtwRTZxa3NjUGJ0b0ttM2lpS0JnZndiT2ZiZEtCRWRuWjZaUFkifX0.Iin-tr6EVhEXjbj9R6xZSToBxZZBDXhl6i9ROw6SJQE6RWJeLt6mKK4jdTMVdxoZfm1J_NqayGJh3N99kHdIbA";
 log_by_lua_block { collectgarbage() }
 --- response_body chomp
@@ -243,7 +243,7 @@ log_by_lua_block { collectgarbage() }
     {
       "issuer": "https://example.com/auth/realms/apicast",
       "config": { "id_token_signing_alg_values_supported": [ "RS256" ] },
-      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----" } }
+      "keys": { "somekid": { "pem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALClz96cDQ965ENYMfZzG+Acu25lpx2K\nNpAALBQ+catCA59us7+uLY5rjQR6SOgZpCz5PJiKNAdRPDJMXSmXqM0CAwEAAQ==\n-----END PUBLIC KEY-----", "alg": "RS256" } }
     }
   ],
   "services": [
@@ -278,7 +278,7 @@ proxy_ssl_trusted_certificate $TEST_NGINX_SERVER_ROOT/html/ca.crt;
 proxy_ssl_certificate $TEST_NGINX_SERVER_ROOT/html/client.crt;
 proxy_ssl_certificate_key $TEST_NGINX_SERVER_ROOT/html/client.key;
 proxy_pass https://$server_addr:$apicast_port/t;
-proxy_set_header Host localhost;
+proxy_set_header Host test;
 proxy_set_header Authorization "Bearer eyJraWQiOiJzb21la2lkIiwiYWxnIjoiUlMyNTYifQ.eyJleHAiOjE5MjQxMjU0MzQsInN1YiI6InNvbWVvbmUiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiZGlyZWN0b3IiXX0sImZvbyI6IjEiLCJpc3MiOiJodHRwczovL2V4YW1wbGUuY29tL2F1dGgvcmVhbG1zL2FwaWNhc3QiLCJhdWQiOiJhdWRpZW5jZSJ9.GDYu4nT73_vPV4ZGa5DL8TAWZvn2TI47WxbXFH6wnUMn818slif-gUp_14pGleOR6VcLrEAC3VwEidtn08Ah8A";
 log_by_lua_block { collectgarbage() }
 --- response_body chomp

@@ -5,6 +5,16 @@ use Test::APIcast::Blackbox 'no_plan';
 # stderr to be able to use "grep_error_log" by setting APICAST_ACCESS_LOG_FILE
 $ENV{APICAST_ACCESS_LOG_FILE} = "$Test::Nginx::Util::ErrLogFile";
 
+sub large_param {
+  my $res = "";
+  for (my $i=0; $i <= 1024; $i++) {
+    $res = $res . "aaaaaaaaaa";
+  }
+  return $res;
+}
+
+$ENV{'LARGE_PARAM'} = large_param();
+
 repeat_each(2);
 
 run_tests();
@@ -131,3 +141,26 @@ yay, api backend: test:$TEST_NGINX_SERVER_PORT
 qr/\+0000\] localhost\:\d+ 127\.0\.0\.1\:\d+/
 --- no_error_log
 [error]
+
+
+=== TEST 4: large URI is handled correctly without leaving variables uninitialized.
+--- configuration
+{
+  "services": [
+    {
+      "id": 42,
+      "proxy": {
+        "proxy_rules": [
+          { "pattern": "/", "http_method": "GET", "metric_system_name": "hits", "delta": 2 }
+        ]
+      }
+    }
+  ]
+}
+--- request eval
+"GET /?user_key=value&large_param=$ENV{LARGE_PARAM}"
+--- error_code: 414
+--- no_error_log eval
+[
+  qr/using uninitialized \"\w+\" variable while logging request/
+]
